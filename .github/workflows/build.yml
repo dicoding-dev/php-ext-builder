@@ -1,0 +1,68 @@
+name: Build & Push Image
+'on':
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Generate build version
+        run: |
+          echo "branch=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
+          echo "commit=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
+          echo "currdate=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+        id: version
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/deck-web-base
+          tags: |
+            type=raw,value=${{ steps.version.outputs.branch }}
+            type=raw,value=${{ steps.version.outputs.commit }}
+          flavor: latest=true
+
+      - name: Generate build cache tag
+        run: |
+          echo "ghcr=ghcr.io/${{ github.repository_owner }}/deck-web-base:buildcache" >> $GITHUB_OUTPUT
+        id: buildcache
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ steps.buildcache.outputs.ghcr }}
+          cache-to: type=registry,ref=${{ steps.buildcache.outputs.ghcr }},mode=max
