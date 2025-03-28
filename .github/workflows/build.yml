@@ -28,7 +28,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository_owner }}/deck-web-base
+            ghcr.io/${{ github.repository_owner }}/php-ext-builder
           tags: |
             type=raw,value=${{ steps.version.outputs.branch }}
             type=raw,value=${{ steps.version.outputs.commit }}
@@ -36,7 +36,7 @@ jobs:
 
       - name: Generate build cache tag
         run: |
-          echo "ghcr=ghcr.io/${{ github.repository_owner }}/deck-web-base:buildcache" >> $GITHUB_OUTPUT
+          echo "ghcr=ghcr.io/${{ github.repository_owner }}/php-ext-builder:buildcache" >> $GITHUB_OUTPUT
         id: buildcache
 
       - name: Set up QEMU
