@@ -33,5 +33,6 @@ RUN git clone --recursive --depth=1 https://github.com/NoiseByNorthwest/php-spx.
 # Install and configure Xdebug
 RUN pecl install xdebug && docker-php-ext-enable xdebug && \
     echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
-    echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.client_host=172.20.0.1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.idekey=dicoding-debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     rm -rf /tmp/pear
